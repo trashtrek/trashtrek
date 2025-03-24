@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up</title>
+    <link rel="stylesheet" href="styles.css">
+    <script type="module">
+        // Import Firebase SDKs
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-app.js";
+        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-firestore.js";
+
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBKjv1_xDkb7DWjEBuVDyHvHpkjy6UR69A",
+            authDomain: "trashtrek-db48c.firebaseapp.com",
+            projectId: "trashtrek-db48c",
+            storageBucket: "trashtrek-db48c.appspot.com",
+            messagingSenderId: "806265755170",
+            appId: "1:806265755170:web:fdce723b3ef706f242dc7b",
+            measurementId: "G-5D9CSMTLHM"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        document.addEventListener("DOMContentLoaded", function () {
+            document.getElementById("signupForm").addEventListener("submit", async function (event) {
+                event.preventDefault();  // Prevent page reload
+
+                const userId = document.getElementById("user_id").value;
+                const password = document.getElementById("password").value;
+                const confirmPassword = document.getElementById("confirm_password").value;
+                const errorMessage = document.getElementById("error-message");
+
+                if (password !== confirmPassword) {
+                    errorMessage.textContent = "Passwords do not match!";
+                    errorMessage.style.display = "block";
+                    return;
+                }
+
+                try {
+                    const userRef = doc(db, "users", userId);
+                    const userSnap = await getDoc(userRef);
+
+                    if (userSnap.exists()) {
+                        errorMessage.textContent = "User ID already exists! Try a different one.";
+                        errorMessage.style.display = "block";
+                    } else {
+                        await setDoc(userRef, { password: password, points: 0 });
+                        sessionStorage.setItem("user_id", userId);
+                        window.location.href = "home.html";  // Redirect to home page
+                    }
+                } catch (error) {
+                    console.error("Signup Error:", error);
+                    errorMessage.textContent = "Error signing up. Try again.";
+                    errorMessage.style.display = "block";
+                }
+            });
+        });
+    </script>
+    <style>
+        /* General Reset */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body, html {
+            height: 100%;
+            font-family: 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #d74b0a, #1d0f02, #120202);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            background: rgba(25, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 30px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 400px;
+        }
+
+        h2 { color: white; margin-bottom: 20px; }
+
+        form { display: flex; flex-direction: column; }
+
+        input {
+            width: 100%;
+            margin: 10px 0;
+            padding: 12px;
+            border: none;
+            border-radius: 5px;
+            background: rgba(11, 188, 188, 0.2);
+            color: white;
+            font-size: 1em;
+            outline: none;
+        }
+
+        input::placeholder { color: rgba(255, 255, 255, 0.7); }
+
+        button {
+            background: #ff7b00;
+            color: white;
+            border: none;
+            padding: 12px;
+            width: 100%;
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 1.1em;
+            transition: background 0.3s;
+        }
+
+        button:hover { background: #e66a00; }
+
+        p { color: white; margin-top: 15px; }
+
+        a { color: #ffbb33; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+
+        .error-message {
+            color: red;
+            margin-top: 10px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Sign Up</h2>
+        
+        <p class="error-message" id="error-message"></p>
+
+        <form id="signupForm">
+            <input type="text" id="user_id" name="user_id" placeholder="User ID" required>
+            <input type="password" id="password" name="password" placeholder="Password" required>
+            <input type="password" id="confirm_password" name="confirm_password" placeholder="Confirm Password" required>
+            <button type="submit">Sign Up</button>
+        </form>
+
+        <p>Already have an account? <a href="login.html">Login</a></p>
+    </div>
+</body>
+</html>

@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Cleaned Image | TrashTrek</title>
+    <link rel="stylesheet" href="uploadcleaned.css">
+    <style>
+        #map {
+            height: 300px;
+            width: 100%;
+            margin-top: 20px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            display: none;
+        }
+        .error-message {
+            color: red;
+            margin-top: 20px;
+            display: none;
+        }
+        .success-message {
+            color: green;
+            margin-top: 20px;
+            display: none;
+        }
+    </style>
+    <script type="module">
+        // Import Firebase SDKs
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-app.js";
+        import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-firestore.js";
+
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDa-g9F78fLXcQhvuHCQcdjMCpp7Bscr5w",
+            authDomain: "trashtrek-db48c.firebaseapp.com",
+            projectId: "trashtrek-db48c",
+            storageBucket: "trashtrek-db48c.appspot.com",
+            messagingSenderId: "806265755170",
+            appId: "1:806265755170:web:fdce723b3ef706f242dc7b"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        function initMap(lat, lng) {
+            const location = { lat: lat, lng: lng };
+            const map = new google.maps.Map(document.getElementById("map"), {
+                zoom: 15,
+                center: location,
+                mapTypeControl: false,
+                streetViewControl: false
+            });
+            new google.maps.Marker({ position: location, map: map });
+            document.getElementById("map").style.display = "block";
+        }
+
+        document.getElementById('uploadForm').onsubmit = async function(event) {
+            event.preventDefault();
+            const imageUpload = document.getElementById('imageUpload').files[0];
+            const location = document.getElementById('location').value;
+            const selectedLocation = localStorage.getItem('selectedLocation');
+            const errorMessageElement = document.getElementById('errorMessage');
+            const successMessageElement = document.getElementById('successMessage');
+            errorMessageElement.style.display = 'none'; // Hide error message initially
+            successMessageElement.style.display = 'none'; // Hide success message initially
+
+            if (!imageUpload || !location || !selectedLocation) {
+                errorMessageElement.textContent = 'Please select an image and enter location.';
+                errorMessageElement.style.display = 'block';
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                const uncleanedImages = JSON.parse(localStorage.getItem('images')) || [];
+                const uncleanedImage = uncleanedImages.find(img => img.location === selectedLocation);
+
+                if (!uncleanedImage) {
+                    errorMessageElement.textContent = 'Uncleaned image not found.';
+                    errorMessageElement.style.display = 'block';
+                    return;
+                }
+
+                const result = await compareImages(uncleanedImage.src, e.target.result);
+
+                if (result.error) {
+                    errorMessageElement.textContent = result.error;
+                    errorMessageElement.style.display = 'block';
+                } else if (result.cleaned) {
+                    uncleanedImage.completed = true;
+                    localStorage.setItem('images', JSON.stringify(uncleanedImages));
+
+                    await updateUserPoints(10); // Add 10 points
+
+                    successMessageElement.textContent = "Image verified! +10 points added.";
+                    successMessageElement.style.display = 'block';
+
+                    setTimeout(() => {
+                        window.location.href = 'play.html'; // Redirect to Play page
+                    }, 2000);
+                } else {
+                    errorMessageElement.textContent = 'The area is not cleaned.';
+                    errorMessageElement.style.display = 'block';
+                }
+            };
+            reader.readAsDataURL(imageUpload);
+        };
+
+        async function updateUserPoints(points) {
+            const userId = sessionStorage.getItem("user_id");
+            if (!userId) {
+                console.error("No logged-in user.");
+                return;
+            }
+
+            const userRef = doc(db, "users", userId);
+            const userSnap = await getDoc(userRef);
+
+            if (userSnap.exists()) {
+                const currentPoints = userSnap.data().points || 0;
+                await updateDoc(userRef, { points: currentPoints + points });
+                console.log(`Updated points for ${userId}: ${currentPoints + points}`);
+            } else {
+                console.error("User not found in Firestore.");
+            }
+        }
+
+        async function compareImages(uncleanedSrc, cleanedSrc) {
+            const response = await fetch('http://127.0.0.1:5000/compare_images', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ uncleanedSrc, cleanedSrc })
+            });
+            return response.json();
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const locationParam = urlParams.get('location');
+            if (locationParam) {
+                document.getElementById('location').value = decodeURIComponent(locationParam);
+                const latLng = locationParam.split(',');
+                if (latLng.length === 2) {
+                    initMap(parseFloat(latLng[0]), parseFloat(latLng[1]));
+                }
+            }
+        });
+    </script>
+</head>
+<body id="upload-cleaned">
+    <header>
+        <div class="logo">
+            <h1>Trash To Treasure</h1>
+        </div>
+        <nav>
+            <ul class="nav-links">
+                <li><a href="home.html">Home</a></li>
+                <li><a href="aboutus.html">About Us</a></li>
+                <li><a href="play.html">Play</a></li>
+                <li><a href="contactus.html">Contact Us</a></li>
+                <li><a href="rewards.html">Rewards</a></li>
+                <li><a href="nearbybins.html">Nearby Bins</a></li>
+                <li><a href="complaint.html">Complaint</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section class="upload-form">
+            <h2>Upload Cleaned Image</h2>
+            <form id="uploadForm">
+                <div class="form-group">
+                    <label for="imageUpload">Choose Cleaned Image</label>
+                    <input type="file" id="imageUpload" name="image" accept="image/*" required>
+                </div>
+                <div class="form-group">
+                    <label for="location">Location</label>
+                    <input type="text" id="location" name="location" placeholder="Enter location" required>
+                </div>
+                <button type="submit" class="submit-btn">Upload</button>
+            </form>
+            <div class="error-message" id="errorMessage"></div>
+            <div class="success-message" id="successMessage"></div>
+        </section>
+        <div id="map"></div>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 TrashTrek. All Rights Reserved.</p>
+    </footer>
+
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDa-g9F78fLXcQhvuHCQcdjMCpp7Bscr5w" async defer></script>
+</body>
+</html>

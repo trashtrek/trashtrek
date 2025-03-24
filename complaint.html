@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Complaint | TrashTrek</title>
+    <link rel="stylesheet" href="complaint.css">
+    <script>
+        function sendToWhatsApp() {
+            let phoneNumber = "1234567890"; // Replace with your WhatsApp number in international format (without +)
+            let location = document.getElementById("location").value;
+            let details = document.getElementById("details").value;
+
+            if (!location || !details) {
+                alert("Please fill in all fields before submitting.");
+                return;
+            }
+
+            let message = `🚨 *TrashTrek Complaint Report* 🚨\n\n📍 *Location:* ${location}\n📝 *Details:* ${details}\n\n📸 *Please attach images/videos before sending.*`;
+
+            // Open WhatsApp with pre-filled message
+            let whatsappURL = `https://wa.me/${7736589719}?text=${encodeURIComponent(message)}`;
+            window.open(whatsappURL, "_blank");
+        }
+    </script>
+</head>
+<body id="complaint">
+    <header>
+        <div class="logo">
+            <h1>TrashTrek</h1>
+        </div>
+        <nav>
+            <ul class="nav-links">
+                <li><a href="home.html">Home</a></li>
+                <li><a href="aboutus.html">About Us</a></li>
+                <li><a href="play.html">Play</a></li>
+                <li><a href="contactus.html">Contact Us</a></li>
+                <li><a href="rewards.html">Rewards</a></li>
+                <li><a href="nearbybins.html">Nearby Bins</a></li>
+                <li><a href="complaint.html" class="active">Complaint</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section class="form-section">
+            <h1>Submit a Complaint</h1>
+            <p>Help us identify problem areas by providing detailed information.</p>
+            <form onsubmit="event.preventDefault(); sendToWhatsApp();">
+                <label for="location">Location:</label>
+                <input type="text" id="location" name="location" placeholder="Enter the location" required>
+
+                <label for="details">Details:</label>
+                <textarea id="details" name="details" rows="4" placeholder="Provide additional details about the complaint" required></textarea>
+
+                <button type="submit">Send via WhatsApp</button>
+            </form>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 TrashTrek. All Rights Reserved.</p>
+    </footer>
+</body>
+</html>

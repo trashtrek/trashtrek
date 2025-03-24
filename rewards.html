@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rewards | Trash To Treasure</title>
+    <link rel="stylesheet" href="rewards.css">
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-app.js";
+        import { getFirestore, doc, getDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBKjv1_xDkb7DWjEBuVDyHvHpkjy6UR69A",
+            authDomain: "trashtrek-db48c.firebaseapp.com",
+            projectId: "trashtrek-db48c",
+            storageBucket: "trashtrek-db48c.appspot.com",
+            messagingSenderId: "806265755170",
+            appId: "1:806265755170:web:fdce723b3ef706f242dc7b",
+            measurementId: "G-5D9CSMTLHM"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        const userId = sessionStorage.getItem("user_id");
+
+        async function fetchUserPoints() {
+            if (!userId) {
+                document.querySelector(".points-display p").textContent = "Not Logged In";
+                return;
+            }
+
+            const userRef = doc(db, "users", userId);
+            const userSnap = await getDoc(userRef);
+
+            if (userSnap.exists()) {
+                const userData = userSnap.data();
+                document.querySelector(".points-display p").textContent = userData.points || 0;
+            } else {
+                document.querySelector(".points-display p").textContent = "User Not Found";
+            }
+        }
+
+        async function fetchLeaderboard() {
+            const leaderboardList = document.getElementById("leaderboard-list");
+            leaderboardList.innerHTML = "Loading...";
+
+            const usersRef = collection(db, "users");
+            const usersSnap = await getDocs(usersRef);
+
+            let leaderboardData = [];
+            usersSnap.forEach(doc => {
+                const userData = doc.data();
+                leaderboardData.push({ id: doc.id, points: userData.points || 0 });
+            });
+
+            leaderboardData.sort((a, b) => b.points - a.points);
+            leaderboardList.innerHTML = "";
+
+            leaderboardData.forEach((user, index) => {
+                const listItem = document.createElement("li");
+                listItem.innerHTML = `<span>#${index + 1} ${user.id}</span> - ${user.points} points`;
+                leaderboardList.appendChild(listItem);
+            });
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            fetchUserPoints();
+            fetchLeaderboard();
+        });
+    </script>
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <h1>Trash To Treasure</h1>
+        </div>
+        <nav>
+            <ul class="nav-links">
+                <li><a href="home.html">Home</a></li>
+                <li><a href="aboutus.html">About Us</a></li>
+                <li><a href="play.html">Play</a></li>
+                <li><a href="contactus.html">Contact Us</a></li>
+                <li><a href="rewards.html" class="active">Rewards</a></li>
+                <li><a href="nearbybins.html">Nearby Bins</a></li>
+                <li><a href="complaint.html">Complaint</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <div class="container">
+            <div class="center-section">
+                <div class="leaf">
+                    <img src="/greenleaf.jpg" alt="Green Leaf">
+                </div>
+                <div class="points-display">
+                    <h2>Total Points</h2>
+                    <p>Loading...</p>
+                </div>
+            </div>
+
+            <div class="leaderboard">
+                <h2>Leaderboard</h2>
+                <ul id="leaderboard-list">
+                    <li>Loading...</li>
+                </ul>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 TrashTrek. All Rights Reserved.</p>
+    </footer>
+</body>
+</html>

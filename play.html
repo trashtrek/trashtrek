@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Play | Trash To Treasure</title>
+    <link rel="stylesheet" href="play.css">
+    <style>
+        .gallery {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .uploaded-image {
+            max-width: 200px;
+            margin: 10px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            position: relative;
+            cursor: pointer;
+        }
+        .delete-button {
+            display: block;
+            margin: 5px auto;
+            padding: 5px 10px;
+            background-color: red;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .delete-button:hover {
+            background-color: darkred;
+        }
+        .image-container {
+            text-align: center;
+            margin: 10px;
+            position: relative;
+        }
+    </style>
+</head>
+<body id="play">
+    <header>
+        <div class="logo">
+            <h1>Trash To Treasure</h1>
+        </div>
+        <nav>
+            <ul class="nav-links">
+                <li><a href="home.html">Home</a></li>
+                <li><a href="aboutus.html">About Us</a></li>
+                <li><a href="play.html" class="active">Play</a></li>
+                <li><a href="contactus.html">Contact Us</a></li>
+                <li><a href="rewards.html">Rewards</a></li>
+                <li><a href="nearbybins.html">Nearby Bins</a></li>
+                <li><a href="complaint.html">Complaint</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section class="gallery">
+            <div id="imageDisplayArea"></div>
+        </section>
+        <a href="upload.html" class="add-btn" title="Add New Location">+</a>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 TrashTrek. All Rights Reserved.</p>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const imageDisplayArea = document.getElementById('imageDisplayArea');
+            const images = JSON.parse(localStorage.getItem('images')) || [];
+
+            images.forEach((image, index) => {
+                const container = document.createElement('div');
+                container.classList.add('image-container');
+
+                const imgElement = document.createElement('img');
+                imgElement.src = image.src;
+                imgElement.alt = image.location;
+                imgElement.classList.add('uploaded-image');
+                imgElement.onclick = function() {
+                    window.location.href = `uploadcleaned.html?location=${encodeURIComponent(image.location)}`;
+                    localStorage.setItem('selectedLocation', image.location);
+                };
+                container.appendChild(imgElement);
+
+                const locationElement = document.createElement('p');
+                locationElement.textContent = `Location: ${image.location}`;
+                container.appendChild(locationElement);
+
+                if (image.completed) {
+                    const completedLabel = document.createElement('span');
+                    completedLabel.textContent = ' (Completed)';
+                    completedLabel.style.color = 'green';
+                    locationElement.appendChild(completedLabel);
+                }
+
+                const deleteButton = document.createElement('button');
+                deleteButton.textContent = 'Delete';
+                deleteButton.classList.add('delete-button');
+                deleteButton.onclick = function() {
+                    images.splice(index, 1);
+                    localStorage.setItem('images', JSON.stringify(images));
+                    imageDisplayArea.removeChild(container);
+                };
+                container.appendChild(deleteButton);
+
+                imageDisplayArea.appendChild(container);
+            });
+        });
+    </script>
+</body>
+</html>

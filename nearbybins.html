@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nearby Waste Bins | TrashTrek</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDa-g9F78fLXcQhvuHCQcdjMCpp7Bscr5w&libraries=places&callback=initMap" async defer></script>
+    <script>
+        let map, service, infowindow;
+
+        function initMap() {
+            map = new google.maps.Map(document.getElementById("map"), {
+                center: { lat: 20.5937, lng: 78.9629 }, // Default: India
+                zoom: 12
+            });
+            infowindow = new google.maps.InfoWindow();
+            service = new google.maps.places.PlacesService(map);
+        }
+
+        function findLocation() {
+            const address = document.getElementById("location-input").value;
+            const geocoder = new google.maps.Geocoder();
+
+            if (!address) {
+                alert("Please enter a location!");
+                return;
+            }
+
+            geocoder.geocode({ address: address }, (results, status) => {
+                if (status === "OK") {
+                    const location = results[0].geometry.location;
+                    map.setCenter(location);
+                    new google.maps.Marker({
+                        position: location,
+                        map: map,
+                        title: "Searched Location",
+                        icon: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png"
+                    });
+                    findNearbyBins(location);
+                } else {
+                    alert("Location not found. Please enter a valid location.");
+                }
+            });
+        }
+
+        function findNearbyBins(location) {
+            const request = {
+                location: location,
+                radius: 3000, // 3km radius
+                keyword: "trash can OR waste bin OR garbage disposal"
+            };
+
+            service.nearbySearch(request, (results, status) => {
+                if (status === google.maps.places.PlacesServiceStatus.OK) {
+                    results.forEach(place => {
+                        const marker = new google.maps.Marker({
+                            position: place.geometry.location,
+                            map: map,
+                            title: place.name,
+                            icon: "https://maps.google.com/mapfiles/kml/shapes/trash.png"
+                        });
+
+                        google.maps.event.addListener(marker, "click", () => {
+                            infowindow.setContent(`<strong>${place.name}</strong><br>${place.vicinity}`);
+                            infowindow.open(map, marker);
+                        });
+                    });
+                } else {
+                    alert("No waste bins found nearby.");
+                }
+            });
+        }
+    </script>
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <h1>TrashTrek</h1>
+        </div>
+        <nav>
+            <ul class="nav-links">
+                <li><a href="home.html">Home</a></li>
+                <li><a href="nearbybins.html" class="active">Nearby Bins</a></li>
+                <li><a href="play.html">Play</a></li>
+                <li><a href="contactus.html">Contact Us</a></li>
+                <li><a href="rewards.html">Rewards</a></li>
+                <li><a href="complaint.html">Complaint</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section class="content">
+            <h1>Find Nearby Waste Bins</h1>
+            <p>Enter a location to find waste bins around you.</p>
+            <input type="text" id="location-input" placeholder="Enter location...">
+            <button onclick="findLocation()">Search</button>
+            <div id="map"></div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 TrashTrek. All Rights Reserved.</p>
+    </footer>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #121212;
+            color: white;
+        }
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            background-color: rgba(0, 0, 0, 0.6);
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+        }
+        .logo h1 {
+            font-size: 2.5em;
+            color: white;
+        }
+        .nav-links {
+            list-style: none;
+            display: flex;
+            gap: 20px;
+            margin: 0;
+            padding: 0;
+        }
+        .nav-links li a {
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+            padding: 10px 15px;
+            border-radius: 6px;
+            transition: background-color 0.3s;
+        }
+        .nav-links li a:hover,
+        .nav-links li a.active {
+            background-color: #ff5722;
+        }
+        .content {
+            margin-top: 100px;
+            text-align: center;
+            padding: 50px 20px;
+        }
+        #map {
+            width: 100%;
+            height: 500px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+            margin-top: 20px;
+        }
+        input[type="text"] {
+            padding: 10px;
+            width: 300px;
+            margin: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        button {
+            padding: 10px 20px;
+            border: none;
+            background-color: #ff5722;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #e64a19;
+        }
+        footer {
+            text-align: center;
+            padding: 20px;
+            background-color: #222;
+            position: relative;
+            width: 100%;
+        }
+    </style>
+</body>
+</html>

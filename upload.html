@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Image | TrashTrek</title>
+    <link rel="stylesheet" href="play.css">
+    <style>
+        #map {
+            height: 300px;
+            width: 100%;
+            margin-top: 20px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+        }
+        .image-preview {
+            margin-top: 20px;
+            text-align: center;
+        }
+        .image-preview img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .error {
+            color: red;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body id="upload">
+    <header>
+        <div class="logo">
+            <h1>TrashTrek</h1>
+        </div>
+    </header>
+
+    <main>
+        <section class="upload-form">
+            <h2>Upload New Image</h2>
+            <form id="uploadForm">
+                <div class="form-group">
+                    <label for="imageUpload">Choose Image</label>
+                    <input type="file" id="imageUpload" name="image" accept="image/*" required>
+                </div>
+                <div class="form-group">
+                    <label for="location">Location</label>
+                    <input type="text" id="location" name="location" placeholder="Click on the map to set location" required>
+                    <button type="button" id="locateMe">Use My Current Location</button>
+                </div>
+                <div id="map"></div>
+                <div id="error" class="error"></div>
+                <button type="submit" class="submit-btn">Upload</button>
+            </form>
+            <div class="image-preview" id="imagePreview"></div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 TrashTrek. All Rights Reserved.</p>
+    </footer>
+
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDa-g9F78fLXcQhvuHCQcdjMCpp7Bscr5w&callback=initMap" async defer></script>
+    <script>
+        let map, marker;
+
+        function initMap() {
+            // Default to user's current location (if allowed)
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const pos = {
+                            lat: position.coords.latitude,
+                            lng: position.coords.longitude
+                        };
+                        initializeMap(pos);
+                    },
+                    (error) => {
+                        console.error("Geolocation error:", error);
+                        initializeMap({ lat: 40.7128, lng: -74.0060 }); // Fallback to New York
+                    }
+                );
+            } else {
+                initializeMap({ lat: 40.7128, lng: -74.0060 }); // Fallback if geolocation is unsupported
+            }
+        }
+
+        function initializeMap(center) {
+            map = new google.maps.Map(document.getElementById("map"), {
+                zoom: 15,
+                center: center,
+                mapTypeControl: false,
+                streetViewControl: false
+            });
+
+            marker = new google.maps.Marker({
+                position: center,
+                map: map,
+                draggable: true
+            });
+
+            // Update location input on marker drag/click
+            google.maps.event.addListener(marker, 'dragend', updateLocation);
+            map.addListener('click', (event) => {
+                marker.setPosition(event.latLng);
+                updateLocation();
+            });
+        }
+
+        function updateLocation() {
+            const latLng = marker.getPosition();
+            document.getElementById('location').value = `${latLng.lat().toFixed(4)},${latLng.lng().toFixed(4)}`; // Store as "lat,lng"
+        }
+
+        document.getElementById('uploadForm').addEventListener('submit', (event) => {
+            event.preventDefault();
+            const imageUpload = document.getElementById('imageUpload').files[0];
+            const location = document.getElementById('location').value;
+
+            if (!imageUpload || !location) {
+                showError("Please upload an image and select a location.");
+                return;
+            }
+
+            if (!imageUpload.type.startsWith('image/')) {
+                showError("Only image files are allowed.");
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                // Display preview
+                document.getElementById('imagePreview').innerHTML = `<img src="${e.target.result}" alt="Uploaded Image">`;
+                
+                // Save data to localStorage
+                const uploadData = {
+                    src: e.target.result,
+                    location: location,
+                    timestamp: new Date().toISOString()
+                };
+
+                // Retrieve existing images from localStorage
+                const images = JSON.parse(localStorage.getItem('images')) || [];
+                images.push(uploadData); // Add new image data
+                localStorage.setItem('images', JSON.stringify(images)); // Save back to localStorage
+
+                console.log("Uploaded data:", uploadData); // Replace with API call
+
+                // Redirect to Play Page after upload
+                window.location.href = 'play.html';
+            };
+            reader.onerror = (error) => showError("Error reading file.");
+            reader.readAsDataURL(imageUpload);
+        });
+
+        function showError(message) {
+            document.getElementById('error').textContent = message;
+            setTimeout(() => document.getElementById('error').textContent = '', 5000);
+        }
+    </script>
+</body>
+</html>
